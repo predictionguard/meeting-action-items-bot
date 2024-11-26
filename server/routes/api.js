@@ -14,7 +14,7 @@ router.post("/invite_bot", async (req, res) => {
     const response = await axios.post(
       `https://${config.recallRegion}.recall.ai/api/v1/bot`,
       {
-        bot_name: "ZoomBot",
+        bot_name: "TestBot",
         meeting_url: meetingUrl,
         transcription_options: {
           provider: "meeting_captions",
