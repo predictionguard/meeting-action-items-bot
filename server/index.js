@@ -11,6 +11,9 @@ app.use(cors());
 
 app.use(bodyParser.json());
 
+app.get("/", (req, res) => {
+    res.send("Welcome to the server!");
+  });
 app.use("/api", apiRoutes);
 app.use("/webhook", webhookRoutes);
 
