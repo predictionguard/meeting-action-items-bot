@@ -35,6 +35,11 @@ const extractActionItems = async (meetingTranscript) => {
                 You will be provided with a meeting transcript. For each participant in the meeting, you must extract         
                 at least one action item. Action items are short, concise statements that describe a task that needs to be completed.
                 Format the output as a JSON array where each object represents a participant and their action items.
+            `
+          },
+          {
+            role: "user",
+            content: `
                 Transcript:
                 ${meetingTranscript}
                 
@@ -52,8 +57,8 @@ const extractActionItems = async (meetingTranscript) => {
                       ...
                   ]
                 }
-            `,
-          },
+            `
+          }
         ],
         max_tokens: 1000,
         temperature: 0.7,
@@ -65,12 +70,15 @@ const extractActionItems = async (meetingTranscript) => {
         },
       }
     );
+
     console.log("Raw API Response:", response.data);
     console.log("Choices Object:", JSON.stringify(response.data.choices, null, 2));
+
+    // Extract and clean the content
     const rawContent = response.data.choices[0].message.content;
-    const jsonContent = rawContent.substring(rawContent.indexOf('{')); 
+    const jsonContent = rawContent.substring(rawContent.indexOf('{')); // Extract only the JSON part
     const data = JSON.parse(jsonContent).meeting_data;
-    //const data = JSON.parse(response.data.choices[0].message.content).meeting_data;
+
     return data;
   } catch (error) {
     console.error("Error fetching data from Prediction Guard API:", error.response?.data || error.message);
