@@ -1,18 +1,31 @@
-//todo: remove the key
 const config = require("./config");
-const OpenAI = require("openai");
 const axios = require("axios");
-console.log("Using OpenAI API Key:", config.predictionguardApiKey);
 
-// const openai = new OpenAI({
-//   apiKey: config.PREDICTIONGUARD_API_KEY,
-// });
+console.log("Using Prediction Guard API Key:", config.predictionguardApiKey);
+
+const preprocessGoogleMeetTranscript = (ccTranscript) => {
+  const grouped = ccTranscript.reduce((acc, segment) => {
+    const speaker = segment.speaker || `Speaker ${segment.speaker_id}`;
+    const text = segment.words.map((word) => word.text).join(" ");
+
+    if (acc[speaker]) {
+      acc[speaker].push(text);
+    } else {
+      acc[speaker] = [text];
+    }
+    return acc;
+  }, {});
+
+  return Object.entries(grouped)
+    .map(([speaker, texts]) => `${speaker}: ${texts.join(" ")}`)
+    .join("\n");
+};
 
 const extractActionItems = async (meetingTranscript) => {
-  console.log("the meeting transcript:", meetingTranscript);
+  console.log("The meeting transcript:\n", meetingTranscript);
   try {
     const response = await axios.post(
-      "https://api.predictionguard.com/chat/completions", // OpenAI API endpoint
+      "https://api.predictionguard.com/chat/completions",
       {
         model: "Hermes-3-Llama-3.1-8B",
         messages: [
@@ -42,24 +55,27 @@ const extractActionItems = async (meetingTranscript) => {
             `,
           },
         ],
-        max_tokens: 1000, 
+        max_tokens: 1000,
         temperature: 0.7,
       },
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${config.predictionguardApiKey}`, 
+          Authorization: `Bearer ${config.predictionguardApiKey}`,
         },
       }
     );
     console.log("Raw API Response:", response.data);
-    console.log("Choices Object:", response.data.choices);
-    const data = JSON.parse(response.data.choices[0].message.content).meeting_data;
+    console.log("Choices Object:", JSON.stringify(response.data.choices, null, 2));
+    const rawContent = response.data.choices[0].message.content;
+    const jsonContent = rawContent.substring(rawContent.indexOf('{')); 
+    const data = JSON.parse(jsonContent).meeting_data;
+    //const data = JSON.parse(response.data.choices[0].message.content).meeting_data;
     return data;
   } catch (error) {
-    console.error("Error fetching data from OpenAI API:", error.response?.data || error.message);
+    console.error("Error fetching data from Prediction Guard API:", error.response?.data || error.message);
     throw new Error("Failed to extract action items");
   }
 };
 
-module.exports = { extractActionItems };
+module.exports = { preprocessGoogleMeetTranscript, extractActionItems };

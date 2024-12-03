@@ -1,7 +1,7 @@
 const express = require("express");
 const axios = require("axios");
 const config = require("../config");
-const { extractActionItems } = require("../utils");
+const { preprocessGoogleMeetTranscript, extractActionItems } = require("../utils");
 const { sendEvent } = require("../events");
 
 const router = express.Router();
@@ -11,7 +11,6 @@ router.post("/status_change", async (req, res) => {
 
   res.status(200).send("OK");
 
-  // extract action items when meeting is over
   if (data.status.code === "done") {
     try {
       const transcriptResponse = await axios.get(
@@ -26,12 +25,12 @@ router.post("/status_change", async (req, res) => {
       );
       const transcript = transcriptResponse.data;
 
-      // error handling for empty transcript
       if (transcript.length === 0) {
         sendEvent({ error: "No transcript found" });
         return;
       }
-      const actionItems = await extractActionItems(JSON.stringify(transcript));
+      const preprocessedTranscript = preprocessGoogleMeetTranscript(transcript);
+      const actionItems = await extractActionItems(preprocessedTranscript);
       sendEvent(actionItems);
     } catch (error) {
       console.error(error);
@@ -39,5 +38,4 @@ router.post("/status_change", async (req, res) => {
     }
   }
 });
-
 module.exports = router;
