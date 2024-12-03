@@ -33,8 +33,8 @@ const extractActionItems = async (meetingTranscript) => {
             role: "system",
             content: `
                 You will be provided with a meeting transcript. For each participant in the meeting, you must extract         
-                at least one action item. Action items are short, concise statements that describe a task that needs to be completed.
-                Format the output as a JSON array where each object represents a participant and their action items.
+                updates for the task they have been working on. Updates are short, concise statements that describe the progress that has been made.
+                Format the output as a JSON array where each object represents a participant and their update.
             `
           },
           {
@@ -48,11 +48,11 @@ const extractActionItems = async (meetingTranscript) => {
                   meeting_data: [
                       {
                           "user": "participant name",
-                          "action_items": ["action item 1", "action item 2", ...]
+                          "updates": ["update 1", "update 2", ...]
                       },
                       {
                           "user": "participant name",
-                          "action_items": ["action item 1", "action item 2", ...]
+                          "updates": ["update 1", "update 2", ...]
                       },
                       ...
                   ]
@@ -74,9 +74,8 @@ const extractActionItems = async (meetingTranscript) => {
     console.log("Raw API Response:", response.data);
     console.log("Choices Object:", JSON.stringify(response.data.choices, null, 2));
 
-    // Extract and clean the content
     const rawContent = response.data.choices[0].message.content;
-    const jsonContent = rawContent.substring(rawContent.indexOf('{')); // Extract only the JSON part
+    const jsonContent = rawContent.substring(rawContent.indexOf('{'));
     const data = JSON.parse(jsonContent).meeting_data;
 
     return data;
