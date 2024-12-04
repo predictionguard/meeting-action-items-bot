@@ -2,7 +2,8 @@ const express = require("express");
 const axios = require("axios");
 const fs = require("fs");
 const config = require("../config");
-const { preprocessGoogleMeetTranscript, extractActionItems } = require("../utils");
+//const { preprocessGoogleMeetTranscript } = require("../utils");
+const { storeTranscriptInLanceDB, generateWithRAG } = require("../RAG_utils");
 const { sendEvent } = require("../events");
 
 const router = express.Router();
@@ -43,6 +44,7 @@ router.post("/status_change", async (req, res) => {
         sendEvent({ error: "No transcript found" });
         return;
       }
+
       const transcriptDir = "./transcripts";
       if (!fs.existsSync(transcriptDir)) {
         fs.mkdirSync(transcriptDir, { recursive: true });
@@ -51,12 +53,19 @@ router.post("/status_change", async (req, res) => {
       fs.writeFileSync(transcriptFilePath, JSON.stringify(transcript, null, 2));
       console.log(`Transcript saved to ${transcriptFilePath}`);
 
-      const preprocessedTranscript = preprocessGoogleMeetTranscript(transcript);
-      const actionItems = await extractActionItems(preprocessedTranscript);
-      sendEvent(actionItems);
+      console.log("Storing transcript in LanceDB...");
+      await storeTranscriptInLanceDB(transcriptFilePath, data.bot_id);
+
+      console.log("Generating summary using RAG pipeline...");
+      const summaryQuery = "Summarize the meeting.";
+      const meetingSummary = await generateWithRAG(summaryQuery);
+
+      console.log("Meeting Summary Generated:", meetingSummary);
+
+      sendEvent({ meeting_summary: meetingSummary });
     } catch (error) {
-      console.error("Error processing transcription:", error.message || error);
-      sendEvent({ error: "Error processing transcription" });
+      console.error("Error processing transcription and RAG pipeline:", error.message || error);
+      sendEvent({ error: "Error processing transcription and RAG pipeline" });
     }
   }
 });
