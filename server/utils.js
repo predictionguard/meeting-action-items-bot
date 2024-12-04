@@ -1,6 +1,7 @@
 const config = require("./config");
 const axios = require("axios");
 console.log("Using Prediction Guard API Key:", config.predictionguardApiKey);
+
 const preprocessGoogleMeetTranscript = (ccTranscript) => {
   const grouped = ccTranscript.reduce((acc, segment) => {
     const speaker = segment.speaker || `Speaker ${segment.speaker_id}`;
@@ -17,6 +18,57 @@ const preprocessGoogleMeetTranscript = (ccTranscript) => {
   return Object.entries(grouped)
     .map(([speaker, texts]) => `${speaker}: ${texts.join(" ")}`)
     .join("\n");
+};
+
+const cleanUpTranscript = async (meetingTranscript) => {
+  console.log("Cleaning up the meeting transcript:\n", meetingTranscript);
+  try {
+    const response = await axios.post(
+      "https://api.predictionguard.com/chat/completions",
+      {
+        model: "Hermes-3-Llama-3.1-8B",
+        messages: [
+          {
+            role: "system",
+            content: `
+                You will be provided with a raw meeting transcript that may contain transcription errors. Your task is to clean up these errors while preserving the original meaning of the content. Ensure that the cleaned-up transcript maintains grammatical correctness and readability without altering the intent or context.
+                Output the cleaned-up transcript as plain text.
+            `,
+          },
+          {
+            role: "user",
+            content: `
+                Raw Transcript:
+                ${meetingTranscript}
+                
+                Output format:
+                Cleaned Transcript:
+                <Your cleaned-up transcript here>
+            `,
+          },
+        ],
+        max_tokens: 1000,
+        temperature: 0.1, 
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${config.predictionguardApiKey}`,
+        },
+      }
+    );
+
+    console.log("Raw API Response:", response.data);
+    console.log("Choices Object:", JSON.stringify(response.data.choices, null, 2));
+
+    const rawContent = response.data.choices[0].message.content;
+    const cleanedTranscript = rawContent.replace("Cleaned Transcript:", "").trim();
+
+    return cleanedTranscript;
+  } catch (error) {
+    console.error("Error fetching data from Prediction Guard API for cleaning transcript:", error.response?.data || error.message);
+    throw new Error("Failed to clean up the transcript");
+  }
 };
 
 const extractActionItems = async (meetingTranscript) => {
@@ -82,4 +134,4 @@ const extractActionItems = async (meetingTranscript) => {
     throw new Error("Failed to extract action items");
   }
 };
-module.exports = { preprocessGoogleMeetTranscript, extractActionItems };
+module.exports = { preprocessGoogleMeetTranscript, extractActionItems, cleanUpTranscript };
