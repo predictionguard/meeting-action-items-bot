@@ -1,8 +1,6 @@
 const config = require("./config");
 const axios = require("axios");
-
 console.log("Using Prediction Guard API Key:", config.predictionguardApiKey);
-
 const preprocessGoogleMeetTranscript = (ccTranscript) => {
   const grouped = ccTranscript.reduce((acc, segment) => {
     const speaker = segment.speaker || `Speaker ${segment.speaker_id}`;
@@ -84,5 +82,4 @@ const extractActionItems = async (meetingTranscript) => {
     throw new Error("Failed to extract action items");
   }
 };
-
 module.exports = { preprocessGoogleMeetTranscript, extractActionItems };
