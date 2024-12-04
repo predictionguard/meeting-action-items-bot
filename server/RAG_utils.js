@@ -2,7 +2,7 @@ const lancedb = require("@lancedb/lancedb");
 const path = require("path");
 const config = require("./config");
 const axios = require("axios");
-const { preprocessGoogleMeetTranscript } = require("./utils");
+const { preprocessGoogleMeetTranscript, cleanUpTranscript } = require("./utils");
 
 
 const uri = "data/meeting_transcripts";
@@ -10,21 +10,24 @@ const db = lancedb.connect(uri);
 
 //module.exports = { db, collectionName };
 
-const readAndPreprocessTranscript = (filePath) => {
-    try {
-      const rawContent = fs.readFileSync(filePath, "utf-8");
-      const parsedContent = JSON.parse(rawContent);
-      return preprocessGoogleMeetTranscript(parsedContent);
-    } catch (error) {
-      console.error("Error reading or preprocessing transcript:", error.message);
-      throw error;
-    }
-  };
+const readPreprocessAndCleanTranscript = async (filePath) => {
+  try {
+    const rawContent = fs.readFileSync(filePath, "utf-8");
+    const parsedContent = JSON.parse(rawContent);
+    const preprocessedTranscript = preprocessGoogleMeetTranscript(parsedContent);
+    const cleanedTranscript = await cleanUpTranscript(preprocessedTranscript);
+
+    return cleanedTranscript;
+  } catch (error) {
+    console.error("Error reading, preprocessing, or cleaning transcript:", error.message);
+    throw error;
+  }
+};
   
   const storeTranscriptInLanceDB = async (filePath, botId) => {
     try {
       const collection = await db.createOrOpenCollection(db);
-      const preprocessedTranscript = readAndPreprocessTranscript(filePath);
+      const preprocessedTranscript = readPreprocessAndCleanTranscript(filePath);
   
       const embeddingResponse = await axios.post(
         "https://api.predictionguard.com/embedding",
