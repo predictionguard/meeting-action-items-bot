@@ -21,7 +21,7 @@ const preprocessGoogleMeetTranscript = (ccTranscript) => {
 };
 
 const cleanUpTranscript = async (meetingTranscript) => {
-  console.log("Cleaning up the meeting transcript:\n", meetingTranscript);
+  console.log("Cleaning up the meeting transcript:\n");
   try {
     const response = await axios.post(
       "https://api.predictionguard.com/chat/completions",
@@ -58,8 +58,8 @@ const cleanUpTranscript = async (meetingTranscript) => {
       }
     );
 
-    console.log("Raw API Response:", response.data);
-    console.log("Choices Object:", JSON.stringify(response.data.choices, null, 2));
+    //console.log("Raw API Response:", response.data);
+    //console.log("Choices Object:", JSON.stringify(response.data.choices, null, 2));
 
     const rawContent = response.data.choices[0].message.content;
     const cleanedTranscript = rawContent.replace("Cleaned Transcript:", "").trim();
@@ -72,7 +72,6 @@ const cleanUpTranscript = async (meetingTranscript) => {
 };
 
 const extractActionItems = async (meetingTranscript) => {
-  console.log("The meeting transcript:\n", meetingTranscript);
   try {
     const response = await axios.post(
       "https://api.predictionguard.com/chat/completions",
@@ -82,33 +81,33 @@ const extractActionItems = async (meetingTranscript) => {
           {
             role: "system",
             content: `
-                You will be provided with a meeting transcript. For each participant in the meeting, you must extract         
-                updates for the task they have been working on. Updates are short, concise statements that describe the progress that has been made.
-                Format the output as a JSON array where each object represents a participant and their update.
-            `
+              You will be provided with a meeting transcript. For each participant in the meeting, you must extract         
+              updates for the task they have been working on. Updates are short, concise statements that describe the progress that has been made.
+              Format the output as a JSON array where each object represents a participant and their update.
+            `,
           },
           {
             role: "user",
             content: `
-                Transcript:
-                ${meetingTranscript}
-                
-                Output format:
-                {
-                  meeting_data: [
-                      {
-                          "user": "participant name",
-                          "updates": ["update 1", "update 2", ...]
-                      },
-                      {
-                          "user": "participant name",
-                          "updates": ["update 1", "update 2", ...]
-                      },
-                      ...
-                  ]
-                }
-            `
-          }
+              Transcript:
+              ${meetingTranscript}
+              
+              Output format:
+              {
+                meeting_data: [
+                    {
+                        "user": "participant name",
+                        "updates": ["update 1", "update 2", ...]
+                    },
+                    {
+                        "user": "participant name",
+                        "updates": ["update 1", "update 2", ...]
+                    },
+                    ...
+                ]
+              }
+            `,
+          },
         ],
         max_tokens: 1000,
         temperature: 0.7,
@@ -121,17 +120,28 @@ const extractActionItems = async (meetingTranscript) => {
       }
     );
 
-    console.log("Raw API Response:", response.data);
-    console.log("Choices Object:", JSON.stringify(response.data.choices, null, 2));
-
+    // Extract JSON from response
     const rawContent = response.data.choices[0].message.content;
-    const jsonContent = rawContent.substring(rawContent.indexOf('{'));
-    const data = JSON.parse(jsonContent).meeting_data;
 
+    // Find the first occurrence of valid JSON
+    const jsonStartIndex = rawContent.indexOf("{");
+    if (jsonStartIndex === -1) {
+      throw new Error("No JSON found in API response");
+    }
+
+    const jsonContent = rawContent.substring(jsonStartIndex);
+
+    // Parse and extract meeting data
+    const data = JSON.parse(jsonContent).meeting_data;
+    console.log("API Response:", data);
     return data;
   } catch (error) {
-    console.error("Error fetching data from Prediction Guard API:", error.response?.data || error.message);
+    console.error(
+      "Error fetching data from Prediction Guard API:",
+      error.response?.data || error.message
+    );
     throw new Error("Failed to extract action items");
   }
 };
+
 module.exports = { preprocessGoogleMeetTranscript, extractActionItems, cleanUpTranscript };
