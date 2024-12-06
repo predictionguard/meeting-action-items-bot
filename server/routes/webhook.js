@@ -2,8 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const fs = require("fs");
 const config = require("../config");
-//const { preprocessGoogleMeetTranscript } = require("../utils");
-const { storeTranscriptInLanceDB, generateWithRAG } = require("../RAG_utils");
+const { preprocessGoogleMeetTranscript,cleanUpTranscript  } = require("../utils");
 const { sendEvent } = require("../events");
 
 const router = express.Router();
@@ -44,7 +43,6 @@ router.post("/status_change", async (req, res) => {
         sendEvent({ error: "No transcript found" });
         return;
       }
-
       const transcriptDir = "./transcripts";
       if (!fs.existsSync(transcriptDir)) {
         fs.mkdirSync(transcriptDir, { recursive: true });
@@ -52,20 +50,31 @@ router.post("/status_change", async (req, res) => {
       const transcriptFilePath = `${transcriptDir}/${data.bot_id}_transcript.txt`;
       fs.writeFileSync(transcriptFilePath, JSON.stringify(transcript, null, 2));
       console.log(`Transcript saved to ${transcriptFilePath}`);
+      const preprocessedTranscript =  preprocessGoogleMeetTranscript(transcript);
+      const cleanTranscript = await cleanUpTranscript(preprocessedTranscript);
+      const pythonScript = "RAG_pipeline.py";
+      const pythonProcess = spawn("python3", [pythonScript]);
 
-      console.log("Storing transcript in LanceDB...");
-      await storeTranscriptInLanceDB(transcriptFilePath, data.bot_id);
+      pythonProcess.stdin.write(cleanTranscript);
+      pythonProcess.stdin.end();
 
-      console.log("Generating summary using RAG pipeline...");
-      const summaryQuery = "Summarize the meeting.";
-      const meetingSummary = await generateWithRAG(summaryQuery);
+      pythonProcess.stdout.on("data", (data) => {
+        console.log(`Python (stdout): ${data}`);
+      });
 
-      console.log("Meeting Summary Generated:", meetingSummary);
+      pythonProcess.stderr.on("data", (data) => {
+        console.error(`Python (stderr): ${data}`);
+      });
 
-      sendEvent({ meeting_summary: meetingSummary });
+      pythonProcess.on("close", (code) => {
+        console.log(`Python process exited with code ${code}`);
+        sendEvent({ status: "indexing_complete", bot_id: data.bot_id });
+        console.log("indexing_complete");
+      });
+
     } catch (error) {
-      console.error("Error processing transcription and RAG pipeline:", error.message || error);
-      sendEvent({ error: "Error processing transcription and RAG pipeline" });
+      console.error("Error processing transcription:", error.message || error);
+      sendEvent({ error: "Error processing transcription" });
     }
   }
 });
