@@ -63,7 +63,10 @@ router.post("/status_change", async (req, res) => {
       const preprocessedTranscript = preprocessGoogleMeetTranscript(transcript);
       const cleanTranscript = await cleanUpTranscript(preprocessedTranscript);
       const actionItems = await extractActionItems(cleanTranscript);
-
+      const inputData = JSON.stringify({
+        meeting_id:  data.bot_id, 
+        transcript: cleanTranscript
+      });
       // Send action items as event
       console.log("Sending action items:", actionItems);
 
@@ -73,7 +76,7 @@ router.post("/status_change", async (req, res) => {
       const pythonScript = "RAG_pipeline.py";
       const pythonProcess = spawn("python3", [pythonScript]);
 
-      pythonProcess.stdin.write(cleanTranscript);
+      pythonProcess.stdin.write(inputData);
       pythonProcess.stdin.end();
 
       // Handle Python script output

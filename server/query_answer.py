@@ -44,7 +44,7 @@ Contexts:
 # MODIFIED FOR TESTING
 #prompt = base_prompt.format(question, context)
 prompt = f"{base_prompt.format(question, context)}"
-
+#print (prompt)
 messages = [
     {"role": "system", "content": prompt}
 ]
