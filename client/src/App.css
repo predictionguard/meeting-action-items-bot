@@ -1,11 +1,60 @@
 .App {
+  font-family: "Helvetica Neue", sans-serif;
+  height: 100vh; /* Full viewport height */
+  width: 100vw; /* Full viewport width */
   display: flex;
-  width: 100%;
-  height: 100%;
   flex-direction: column;
+}
+
+.App--tabs {
+  display: flex;
+  justify-content: flex-start;
+  background-color: #f8f9fa;
+  padding: 10px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.App--tab {
+  padding: 10px 20px;
+  margin-right: 10px;
+  font-size: 16px;
+  border: none;
+  background: #e0e0e0;
+  cursor: pointer;
+  border-radius: 5px;
+  font-weight: bold;
+  transition: background 0.3s, color 0.3s;
+}
+
+.App--tab.active {
+  background: #007bff;
+  color: white;
+}
+
+.App--tab:hover {
+  background: #0056b3;
+  color: white;
+}
+
+.App--content {
+  flex: 1; /* Fills the remaining vertical space */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
-  font-family: "Helvetica Neue";
-  font-style: normal;
-  gap: 20px;
-  padding-top: 5%;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto;
+  background-color: #f9f9f9;
+  padding: 20px;
+}
+
+.App--content h1 {
+  font-size: 24px;
+  margin: 0 0 10px;
+}
+
+.App--content p {
+  font-size: 16px;
+  margin: 0 0 20px;
 }
