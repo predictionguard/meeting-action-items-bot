@@ -1,14 +1,19 @@
 import sys
+import json
 import os
 import re
 import nltk
 from nltk.tokenize import sent_tokenize
 from predictionguard import PredictionGuard
 import lancedb
-
+import pandas as pd
 nltk.download("punkt")
 
-transcript_text = sys.stdin.read().strip()
+input_data = sys.stdin.read()
+payload = json.loads(input_data)
+
+meeting_id = payload.get("meeting_id")
+transcript_text = payload.get("transcript")
 
 client = PredictionGuard(api_key=os.getenv("PREDICTIONGUARD_API_KEY"))
 
@@ -51,22 +56,28 @@ for chunk in chunks:
     embedding = pg_embedder(chunk)
     embeds.append(embedding)
 
-def prepare_data(chunks, embeddings):
+def prepare_data(chunks, embeddings, meeting_id):
     data = []
     for chunk, embed in zip(chunks, embeddings):
-        temp = {"text": chunk, "vector": embed}
+        temp = {"meeting_id": meeting_id, "text": chunk, "vector": embed}
         data.append(temp)
     return data
 
-def lanceDBConnection(chunks, embeddings):
+
+
+def lanceDBConnection(chunks, embeddings, meeting_id):
     db = lancedb.connect("/tmp/lancedb")
-    data = prepare_data(chunks, embeddings)
-    table = db.create_table(
-        "scratch",
-        data=data,
-        mode="overwrite",
-    )
+    data = prepare_data(chunks, embeddings, meeting_id)  # Include meeting_id in the data
+    df = pd.DataFrame(data)  # Convert to a DataFrame
+    
+    # Check if the table exists
+    if "scratch" in db.table_names():
+        table = db.open_table("scratch")
+        table.add(df)  # Append new data to the existing table
+    else:
+        table = db.create_table("scratch", data=df, mode="create")  # Create table if it doesn't exist
+    
     return table
 
-table = lanceDBConnection(chunks, embeds)
+table = lanceDBConnection(chunks, embeds, meeting_id)
 print("Vector store created successfully", file=sys.stderr)
