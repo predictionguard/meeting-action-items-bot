@@ -63,21 +63,26 @@ def prepare_data(chunks, embeddings, meeting_id):
         data.append(temp)
     return data
 
-
-
 def lanceDBConnection(chunks, embeddings, meeting_id):
     db = lancedb.connect("/tmp/lancedb")
     data = prepare_data(chunks, embeddings, meeting_id)  # Include meeting_id in the data
     df = pd.DataFrame(data)  # Convert to a DataFrame
-    
+    print("DataFrame Columns:", df.columns, file=sys.stderr)
+    if "meeting_id" not in df.columns:
+        print("Error: 'meeting_id' column is missing in the DataFrame.", file=sys.stderr)
+        sys.exit(1)
+    print ("table names", db.table_names())
     # Check if the table exists
     if "scratch" in db.table_names():
+        print("table exists")
         table = db.open_table("scratch")
         table.add(df)  # Append new data to the existing table
     else:
+        print ("table created")
         table = db.create_table("scratch", data=df, mode="create")  # Create table if it doesn't exist
     
     return table
 
 table = lanceDBConnection(chunks, embeds, meeting_id)
+
 print("Vector store created successfully", file=sys.stderr)
