@@ -1,9 +1,14 @@
 const express = require("express");
 const axios = require("axios");
-const fs = require("fs");
+const fs = require("fs").promises; 
 const config = require("../config");
-const { preprocessGoogleMeetTranscript,cleanUpTranscript  } = require("../utils");
+const {
+  preprocessGoogleMeetTranscript,
+  cleanUpTranscript,
+  extractActionItems,
+} = require("../utils");
 const { sendEvent } = require("../events");
+const { spawn } = require("child_process");
 
 const router = express.Router();
 
@@ -14,6 +19,8 @@ router.post("/status_change", async (req, res) => {
   if (data.status.code === "done") {
     try {
       console.log("Initiating audio transcription...");
+
+      // Initiate transcription
       const transcribeResponse = await axios.post(
         `https://${config.recallRegion}.recall.ai/api/v1/bot/${data.bot_id}/transcribe/`,
         {},
@@ -27,6 +34,7 @@ router.post("/status_change", async (req, res) => {
       );
       console.log("Transcription initiated:", transcribeResponse.data);
 
+      // Retrieve the transcript
       const transcriptResponse = await axios.get(
         `https://${config.recallRegion}.recall.ai/api/v1/bot/${data.bot_id}/transcript`,
         {
@@ -43,21 +51,32 @@ router.post("/status_change", async (req, res) => {
         sendEvent({ error: "No transcript found" });
         return;
       }
+
+      // Save transcript to file
       const transcriptDir = "./transcripts";
-      if (!fs.existsSync(transcriptDir)) {
-        fs.mkdirSync(transcriptDir, { recursive: true });
-      }
       const transcriptFilePath = `${transcriptDir}/${data.bot_id}_transcript.txt`;
-      fs.writeFileSync(transcriptFilePath, JSON.stringify(transcript, null, 2));
+      await fs.mkdir(transcriptDir, { recursive: true });
+      await fs.writeFile(transcriptFilePath, JSON.stringify(transcript, null, 2));
       console.log(`Transcript saved to ${transcriptFilePath}`);
-      const preprocessedTranscript =  preprocessGoogleMeetTranscript(transcript);
+
+      // Process transcript
+      const preprocessedTranscript = preprocessGoogleMeetTranscript(transcript);
       const cleanTranscript = await cleanUpTranscript(preprocessedTranscript);
+      const actionItems = await extractActionItems(cleanTranscript);
+
+      // Send action items as event
+      console.log("Sending action items:", actionItems);
+
+      sendEvent({ action_items: actionItems });
+
+      // Execute Python script
       const pythonScript = "RAG_pipeline.py";
       const pythonProcess = spawn("python3", [pythonScript]);
 
       pythonProcess.stdin.write(cleanTranscript);
       pythonProcess.stdin.end();
 
+      // Handle Python script output
       pythonProcess.stdout.on("data", (data) => {
         console.log(`Python (stdout): ${data}`);
       });
@@ -69,9 +88,7 @@ router.post("/status_change", async (req, res) => {
       pythonProcess.on("close", (code) => {
         console.log(`Python process exited with code ${code}`);
         sendEvent({ status: "indexing_complete", bot_id: data.bot_id });
-        console.log("indexing_complete");
       });
-
     } catch (error) {
       console.error("Error processing transcription:", error.message || error);
       sendEvent({ error: "Error processing transcription" });
