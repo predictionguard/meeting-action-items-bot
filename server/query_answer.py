@@ -14,6 +14,19 @@ question = sys.stdin.read().strip()
 db = lancedb.connect("/tmp/lancedb")
 table = db.open_table("scratch")
 
+# to fetcht the meeting ids
+def fetch_meeting_ids():
+    db = lancedb.connect("/tmp/lancedb")  # Connect to LanceDB
+    if "scratch" not in db.table_names():
+        return []  # Return an empty list if the table doesn't exist
+
+    table = db.open_table("scratch")  # Open the table
+    df = table.to_pandas()  # Convert to a Pandas DataFrame
+
+    # Extract unique meeting IDs
+    meeting_ids = df["meeting_id"].unique().tolist()
+    return meeting_ids
+
 def pg_embedder(chunk):
     response = client.embeddings.create(
         model="bridgetower-large-itm-mlm-itc",
