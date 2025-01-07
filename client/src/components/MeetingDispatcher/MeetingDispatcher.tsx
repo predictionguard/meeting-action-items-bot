@@ -34,7 +34,7 @@ const MeetingDispatcher: React.FC<TMeetingDispatcherProps> = ({
     } catch (error) {
       notification.error({
         message: "Invalid URL",
-        description: "Please enter a valid google meet URL.",
+        description: "Please enter a valid Zoom meeting URL.",
       });
       return;
     }
