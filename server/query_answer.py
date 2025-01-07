@@ -37,20 +37,18 @@ def pg_embedder(chunk):
 
 
 query_embedding = pg_embedder(question)
-
+ 
 
 k = 5
 result = table.search(query_embedding).limit(k).to_list()
 context = [r["text"] for r in result]
 
 
-base_prompt = """You are an AI assistant. Your task is to understand the user question, and provide an answer using the provided contexts. The context is chunks from a standup meeting transcript where team members provide updates. 
-
-Your answers are correct, high-quality, and written by a domain expert. If the provided context does not contain the answer, simply state, "The provided context does not have the answer."
+base_prompt = """Provide answer to the user question based on the context
 
 User question: {}
 
-Contexts:
+Context:
 {}
 """
 

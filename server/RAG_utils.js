@@ -1,4 +1,5 @@
-const lancedb = require("@lancedb/lancedb");
+// lancedb does not support javascript
+import * as lancedb from "@lancedb/lancedb";
 const path = require("path");
 const config = require("./config");
 const axios = require("axios");
@@ -6,8 +7,9 @@ const { preprocessGoogleMeetTranscript, cleanUpTranscript } = require("./utils")
 
 
 const uri = "data/meeting_transcripts";
-const db = lancedb.connect(uri);
-
+const db = await lancedb.connect(uri);
+const tableName = 'scratch';
+table = await db.createTable(tableName);
 //module.exports = { db, collectionName };
 
 const readPreprocessAndCleanTranscript = async (filePath) => {
@@ -26,11 +28,17 @@ const readPreprocessAndCleanTranscript = async (filePath) => {
   
   const storeTranscriptInLanceDB = async (filePath, botId) => {
     try {
-      const collection = await db.createOrOpenCollection(db);
+      const uri = "data/meeting_transcripts";
+      const db = await lancedb.connect(uri);
+      const tableName = 'your_table_name2';
+      table = await db.createTable(tableName);
+
+      // Read, preprocess, and clean the transcript
       const preprocessedTranscript = readPreprocessAndCleanTranscript(filePath);
-  
+
+      // Obtain the embedding for the preprocessed transcript
       const embeddingResponse = await axios.post(
-        "https://api.predictionguard.com/embedding",
+        'https://api.predictionguard.com/embedding',
         { text: preprocessedTranscript },
         {
           headers: {
@@ -38,24 +46,25 @@ const readPreprocessAndCleanTranscript = async (filePath) => {
           },
         }
       );
-  
       const embedding = embeddingResponse.data.embedding;
-  
-      await collection.insert([
+
+      // Insert the processed data into the table
+      await table.add([
         {
           id: `transcript-${botId}-${Date.now()}`,
           text: preprocessedTranscript,
           embedding,
         },
       ]);
-  
-      console.log("Transcript indexed successfully in LanceDB.");
+
+      console.log('Transcript indexed successfully in LanceDB.');
     } catch (error) {
-      console.error("Error storing transcript in LanceDB:", error.message);
+      console.error('Error storing transcript in LanceDB:', error.message);
       throw error;
     }
   };
-  
+
+
   const queryLanceDB = async (query) => {
     try {
       const collection = await db.openCollection(collectionName);
