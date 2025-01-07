@@ -1,6 +1,6 @@
 const config = require("./config");
 const axios = require("axios");
-console.log("Using Prediction Guard API Key:", config.predictionguardApiKey);
+
 
 const preprocessGoogleMeetTranscript = (ccTranscript) => {
   const grouped = ccTranscript.reduce((acc, segment) => {
@@ -21,7 +21,6 @@ const preprocessGoogleMeetTranscript = (ccTranscript) => {
 };
 
 const cleanUpTranscript = async (meetingTranscript) => {
-  console.log("Cleaning up the meeting transcript:\n");
   try {
     const response = await axios.post(
       "https://api.predictionguard.com/chat/completions",
@@ -133,7 +132,6 @@ const extractActionItems = async (meetingTranscript) => {
 
     // Parse and extract meeting data
     const data = JSON.parse(jsonContent).meeting_data;
-    console.log("API Response:", data);
     return data;
   } catch (error) {
     console.error(
