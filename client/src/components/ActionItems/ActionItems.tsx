@@ -4,7 +4,7 @@ import "./ActionItems.css";
 
 type TActionItem = {
   user: string;
-  action_items: string[];
+  updates: string[];
 };
 
 type TActionItemsProps = {
@@ -17,7 +17,7 @@ const ActionItems: React.FC<TActionItemsProps> = ({ actionItems }) => {
       {actionItems.map((item, index) => (
         <div key={index}>
           <p className="ActionItems--user">{item.user}</p>
-          {item.action_items.map((actionItem, index) => (
+          {item.updates.map((actionItem, index) => (
             <div className="ActionItems--actionItem" key={index}>
               <AlignLeftOutlined
                 style={{ color: "#0D6EFD", fontSize: "12px" }}
