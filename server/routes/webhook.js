@@ -7,7 +7,6 @@ const {
     extractActionItems,
   } = require("../utils");
 const { sendEvent } = require("../events");
-const fs = require("fs").promises; 
 const router = express.Router();
 
 router.post("/status_change", async (req, res) => {
@@ -15,9 +14,18 @@ router.post("/status_change", async (req, res) => {
 
   res.status(200).send("OK");
 
-  // extract action items when meeting is over
   if (data.status.code === "done") {
     try {
+      const transcribeResponse = await axios.post(
+        `https://${config.recallRegion}.recall.ai/api/v1/bot/${data.bot_id}/transcribe/`,
+        {
+          headers: {
+            Authorization: `Token ${config.recallApiKey}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
       const transcriptResponse = await axios.get(
         `https://${config.recallRegion}.recall.ai/api/v1/bot/${data.bot_id}/transcript`,
         {
@@ -28,20 +36,9 @@ router.post("/status_change", async (req, res) => {
           },
         }
       );
-      //const transcript = transcriptResponse.data;   Uncomment
-      const transcriptFilePath = `transcripts/08690d69-2f23-4592-bc77-bc5481756f88_transcript.txt`;
-      const transcriptContent = await fs.readFile(transcriptFilePath, "utf-8");
-      let transcript;
-      try {
-        transcript = JSON.parse(transcriptContent);
-        // Ensure the parsed content is an array
-        if (!Array.isArray(transcript)) {
-          throw new Error("Parsed transcript is not an array");
-        }
-      } catch (error) {
-        console.error("Error parsing transcript file:", error.message);
-        throw new Error("Invalid transcript format");
-      }
+
+
+      const transcript = transcriptResponse.data; 
       // error handling for empty transcript
       if (transcript.length === 0) {
         sendEvent({ error: "No transcript found" });
