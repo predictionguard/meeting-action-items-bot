@@ -14,6 +14,7 @@ payload = json.loads(input_data)
 
 meeting_id = payload.get("meeting_id")
 transcript_text = payload.get("transcript")
+meetingDateTime = payload.get("meetingDateTime")
 
 client = PredictionGuard(api_key=os.getenv("PREDICTIONGUARD_API_KEY"))
 
@@ -56,16 +57,21 @@ for chunk in chunks:
     embedding = pg_embedder(chunk)
     embeds.append(embedding)
 
-def prepare_data(chunks, embeddings, meeting_id):
+def prepare_data(chunks, embeddings, meeting_id, meetingDateTime):
     data = []
     for chunk, embed in zip(chunks, embeddings):
-        temp = {"meeting_id": meeting_id, "text": chunk, "vector": embed}
+        temp = {
+            "meeting_id": meeting_id,
+            "meeting_date": meetingDateTime, 
+            "text": chunk,
+            "vector": embed
+        }
         data.append(temp)
     return data
 
 def lanceDBConnection(chunks, embeddings, meeting_id):
     db = lancedb.connect("/tmp/lancedb")
-    data = prepare_data(chunks, embeddings, meeting_id)  # Include meeting_id in the data
+    data = prepare_data(chunks, embeddings, meeting_id, meetingDateTime)  
     df = pd.DataFrame(data)  # Convert to a DataFrame
     print("DataFrame Columns:", df.columns, file=sys.stderr)
     if "meeting_id" not in df.columns:
@@ -83,6 +89,6 @@ def lanceDBConnection(chunks, embeddings, meeting_id):
     
     return table
 
-table = lanceDBConnection(chunks, embeds, meeting_id)
+table = lanceDBConnection(chunks, embeds, meeting_id, meetingDateTime)
 
 print("Vector store created successfully", file=sys.stderr)

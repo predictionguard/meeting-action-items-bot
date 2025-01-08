@@ -16,6 +16,8 @@ router.post("/status_change", async (req, res) => {
 
   if (data.status.code === "done") {
     try {
+      const meetingDateTime = data.join_at;
+      const formattedDateTime = new Date(meetingDateTime).toLocaleString(); // Human-readable format
       const transcribeResponse = await axios.post(
         `https://${config.recallRegion}.recall.ai/api/v1/bot/${data.bot_id}/transcribe/`,
         {
@@ -54,6 +56,7 @@ router.post("/status_change", async (req, res) => {
       const inputData = JSON.stringify({
         meeting_id: data.bot_id, 
         transcript: actionItems,
+        meetingDateTime: formattedDateTime,
       });
 
       // Execute Python script

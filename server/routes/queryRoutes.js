@@ -4,7 +4,7 @@ const { spawn } = require("child_process");
 const router = express.Router();
 
 // Endpoint to get meeting IDs
-router.get("/get_meeting_ids", (req, res) => {
+router.get("/get_meeting_dates", (req, res) => {
   exec("python3 fetch_meeting_ids.py", (error, stdout, stderr) => {
     if (error) {
       console.error(`Error fetching meeting IDs: ${stderr}`);
@@ -13,8 +13,8 @@ router.get("/get_meeting_ids", (req, res) => {
     }
 
     try {
-      const meetingIds = JSON.parse(stdout);
-      res.json(meetingIds);
+      const meeting_dates = JSON.parse(stdout);
+      res.json(meeting_dates);
     } catch (parseError) {
       console.error("Error parsing meeting IDs:", parseError);
       res.status(500).json({ error: "Error parsing meeting IDs" });

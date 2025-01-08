@@ -24,8 +24,8 @@ def fetch_meeting_ids():
     df = table.to_pandas()  # Convert to a Pandas DataFrame
 
     # Extract unique meeting IDs
-    meeting_ids = df["meeting_id"].unique().tolist()
-    return meeting_ids
+    meeting_dates = df["meeting_date"].unique().tolist()
+    return meeting_dates
 
 def pg_embedder(chunk):
     response = client.embeddings.create(

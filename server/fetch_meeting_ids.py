@@ -10,9 +10,9 @@ def fetch_meeting_ids():
     df = table.to_pandas()  # Convert to a Pandas DataFrame
 
     # Extract unique meeting IDs
-    meeting_ids = df["meeting_id"].unique().tolist()
-    return meeting_ids
+    meeting_dates = df["meeting_date"].unique().tolist()
+    return meeting_dates
 
 if __name__ == "__main__":
-    meeting_ids = fetch_meeting_ids()
-    print(json.dumps(meeting_ids))  # Print as JSON for the Node.js backend to read
+    meeting_dates = fetch_meeting_ids()
+    print(json.dumps(meeting_dates))  # Print as JSON for the Node.js backend to read

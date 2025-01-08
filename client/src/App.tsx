@@ -13,25 +13,24 @@ function App() {
   const [queryAnswer, setQueryAnswer] = useState("");
   const [queryError, setQueryError] = useState("");
   const [activeTab, setActiveTab] = useState("meetings");
-  const [selectedMeetingId, setSelectedMeetingId] = useState("");
-  const [meetings, setMeetings] = useState<{ id: string; title: string; date: string }[]>([]);
+  const [selectedMeetingDate, setSelectedMeetingDate] = useState("");
+  const [meetings, setMeetings] = useState<{ date: string; title: string }[]>([]);
 
   useEffect(() => {
-    const fetchMeetingIds = async () => {
+    const fetchMeetingDates = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/queryRoutes/get_meeting_ids");
-        const meetingData = response.data.map((id: string) => ({
-          id,
-          title: `Meeting ${id}`,
-          date: "N/A",
+        const response = await axios.get("http://localhost:3000/queryRoutes/get_meeting_dates");
+        const meetingData = response.data.map((date: string) => ({
+          date,
+          title: `Meeting on ${date}`,
         }));
         setMeetings(meetingData);
       } catch (error) {
-        console.error("Error fetching meeting IDs:", error);
+        console.error("Error fetching meeting dates:", error);
       }
     };
 
-    fetchMeetingIds();
+    fetchMeetingDates();
   }, []);
 
   return (
@@ -76,8 +75,8 @@ function App() {
         <div className="ask-answer-tab">
           <h2>Select a Past Meeting</h2>
           <select
-            value={selectedMeetingId}
-            onChange={(e) => setSelectedMeetingId(e.target.value)}
+            value={selectedMeetingDate}
+            onChange={(e) => setSelectedMeetingDate(e.target.value)}
             style={{
               marginBottom: "20px",
               padding: "10px",
@@ -87,16 +86,16 @@ function App() {
           >
             <option value="">-- Select a Meeting --</option>
             {meetings.map((meeting) => (
-              <option key={meeting.id} value={meeting.id}>
-                {meeting.title} - {meeting.date}
+              <option key={meeting.date} value={meeting.date}>
+                {meeting.title} {/* Shows "Meeting on {date}" */}
               </option>
             ))}
           </select>
 
-          {selectedMeetingId && (
+          {selectedMeetingDate && (
             <div style={{ marginBottom: "20px" }}>
               <h3>Selected Meeting</h3>
-              <p>{meetings.find((m) => m.id === selectedMeetingId)?.title}</p>
+              <p>{meetings.find((m) => m.date === selectedMeetingDate)?.title}</p>
             </div>
           )}
 
