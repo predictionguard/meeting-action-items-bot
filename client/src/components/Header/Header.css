@@ -1,16 +1,16 @@
 .Header {
-  display: flex; /* Use flexbox for layout */
-  flex-direction: row; /* Align logo and text in a single row */
-  align-items: center; /* Vertically center align logo and text */
-  justify-content: center; /* Center content horizontally */
-  width: 60%;
-  margin: 0 auto; /* Center the entire header within its parent */
+  display: flex; 
+  flex-direction: row; 
+  align-items: center; 
+  justify-content: center; 
+  width: 40%;
+  margin: 0 auto; 
 }
 
 .Header--logo {
   max-width: 100px; /* Control the size of the logo */
   height: auto;
-  margin-right: 20px; /* Add spacing between the logo and the text */
+  margin-right: 20px;
 }
 
 @media (max-width: 768px) {

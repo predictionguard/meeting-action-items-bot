@@ -10,9 +10,9 @@ const Header = () => {
   />
   <div>
     <h1 className="Header--heading">Prediction Guard Meeting Bot</h1>
-    <p className="Header--subheading">
+    {/* <p className="Header--subheading">
       Enter your current meeting link and get a list of updates from each participant at the end of your meeting + Ask questions from past meetings.
-    </p>
+    </p> */}
   </div>
 </div>
     // <div className="Header">
