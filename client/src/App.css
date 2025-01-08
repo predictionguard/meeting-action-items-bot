@@ -3,20 +3,25 @@
   height: 100vh; /* Full viewport height */
   width: 100vw; /* Full viewport width */
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Stacks children vertically */
+  align-items: center; /* Centers children horizontally */
+  justify-content: flex-start; /* Ensures children are aligned at the top */
 }
 
 .App--tabs {
-  display: flex;
-  justify-content: flex-start;
-  background-color: #f8f9fa;
-  padding: 10px 20px;
-  border-bottom: 1px solid #e0e0e0;
+  display: flex; /* Enables Flexbox for alignment */
+  justify-content: center; /* Centers the buttons horizontally */
+  align-items: center; /* Centers the buttons vertically */
+  gap: 20px; /* Adds space between buttons */
+  background-color: #f8f9fa; /* Optional background */
+  padding: 10px 0; /* Adds padding above and below the tabs */
+  border-bottom: 1px solid #e0e0e0; /* Optional border below */
+  margin: 20px auto; /* Centers the tabs container */
+  width: fit-content; /* Shrinks the container to fit its content */
 }
 
 .App--tab {
   padding: 10px 20px;
-  margin-right: 10px;
   font-size: 16px;
   border: none;
   background: #e0e0e0;
@@ -40,7 +45,7 @@
   flex: 1; /* Fills the remaining vertical space */
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
   width: 100%; /* Full width */
   height: 100%; /* Full height */
