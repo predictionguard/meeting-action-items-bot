@@ -14,10 +14,10 @@ router.post("/invite_bot", async (req, res) => {
     const response = await axios.post(
       `https://${config.recallRegion}.recall.ai/api/v1/bot`,
       {
-        bot_name: "PGBot",
+        bot_name: "Prediction Guard Bot",
         meeting_url: meetingUrl,
         transcription_options: {
-          provider: "assembly_ai",
+          provider: "meeting_captions",
         },
       },
       {
